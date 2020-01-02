@@ -35,6 +35,7 @@ class debug_control(object):
             self.handle.writelines(string)
 
     def write_stdout(self, processname, out=None):
+        ''' Writes tyo std out takes processname & out '''
         if out is not None:
             init = out.decode("UTF-8").split("\n")
             self.curr = dt.datetime.now()
@@ -64,6 +65,7 @@ class debug_control(object):
                     out.decode("UTF-8"),
                     os.linesep,
                     self.curr.strftime(self.time_str),
+                    os.linesep
                 ]
             )
             self.handle.writelines(base_str)
@@ -108,6 +110,32 @@ def print_helper(base_str, dbg):
         else:
             dbg.write(base_str)
 
+def print_helper_tuple(init_str, base_str, base_tuple=None, dbg=None):
+    """ print helper applied to test dbg type and take correct print action """
+    if dbg is not None:
+        print_dbg = test_dbg(dbg)
+    else:
+        print_dbg = False
+
+    if print_dbg:
+        if base_tuple is not None and isinstance(base_tuple, (tuple, dict)):
+            if isinstance(base_str, tuple):
+                fnl_str = "".join(base_str)
+            elif isinstance(base_str, str):
+                fnl_str = base_str
+
+            fnl_str = fnl_str % base_tuple
+            fnl_str = init_str + fnl_str
+            if isinstance(dbg, bool):
+                print(
+                    "  ".join([dt.datetime.now().strftime("%Y/%m/%d %H:%M:%S"), fnl_str])
+                )
+            else:
+                dbg.write(fnl_str)
+        else:
+            if isinstance(base_str, tuple):
+                base_str = "".join(base_str)
+            print_helper("".join([init_str, base_str]), dbg)
 
 def error_helper(pred, stderr=None, post=None, dbg=False):
     """

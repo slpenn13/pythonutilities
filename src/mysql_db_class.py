@@ -29,16 +29,29 @@ class mysql_db_class(object):
         if self.database is not None:
             self.cursor.execute("USE " + self.database + ";")
 
-    def insert(self, query):
+    def insert(self, query, params_tuple=None):
         """ Simple insert query -- with roll back in case of failure , returns 1
             in case of success
         """
         success = 1
         try:
-            self.cursor.execute(query)
+            cursor = self.connection.cursor()
+            if isinstance(query, str) and params_tuple is None:
+                print("Warning -- SQL injection -- candidate (insert)")
+                cursor.execute(query)
+            elif isinstance(query, str) and isinstance(params_tuple, (tuple, dict)):
+                cursor.execute(query, params_tuple)
+            elif isinstance(query, tuple) and isinstance(params_tuple, (tuple, dict)):
+                cursor.execute(query, params_tuple)
+            else:
+                raise ValueError("SQL (query) type combination not supported")
+
             self.connection.commit()
             success = 0
-        except:
+        except ValueError as v:
+            print("Failed Insert {}".format(v))
+        except mysqldb.Error as err:
+            print("Failed Insert: {}".format(err))
             self.connection.rollback()
 
         return success
@@ -52,27 +65,51 @@ class mysql_db_class(object):
             self.cursor.executemany(query, vals)
             self.connection.commit()
             success = 0
-        except:
+        except mysqldb.Error as err:
+            print("Failed Insert: {}".format(err))
             self.connection.rollback()
 
         return success
 
-    def update(self, query):
+    def update(self, query, params_tuple=None):
         """ Simple update query -- with roll back in case of failure"""
         success = 1
         try:
-            self.cursor.execute(query)
+            if isinstance(query, str) and params_tuple is None:
+                print("Warning -- SQL injection -- candidate (update)")
+                self.cursor.execute(query)
+            elif isinstance(query, tuple) and isinstance(params_tuple, (tuple, dict)):
+                self.cursor.execute(query, params_tuple)
+            elif isinstance(query, str) and isinstance(params_tuple, (tuple, dict)):
+                self.cursor.execute(query, params_tuple)
+            else:
+                raise ValueError("SQL (query) type combination not supported")
+
             self.connection.commit()
             success = 0
-        except:
+        except ValueError as v:
+            print("Failed Insert {}".format(v))
+        except mysqldb.Error as err:
+            print("Failed Insert: {}".format(err))
             self.connection.rollback()
 
         return success
 
-    def query(self, query):
+    def query(self, query, params_tuple=None):
         """ Select query fetch -- applies MySQLCursorDict to cursor"""
+
         cursor = self.connection.cursor(dictionary=True)
-        cursor.execute(query)
+        if isinstance(query, str) and params_tuple is None:
+            print("Warning -- SQL injection -- candidate (query)")
+            cursor.execute(query)
+        elif isinstance(query, tuple) and isinstance(params_tuple, (tuple, dict)):
+            cursor.execute(query, params_tuple)
+        elif isinstance(query, str) and isinstance(params_tuple, (tuple, dict)):
+            cursor.execute(query, params_tuple)
+        else:
+            base = "SQL (query) type combination not supported %s %s"
+            base = base % (str(type(query)), str(type(params_tuple)))
+            raise ValueError(base)
 
         return cursor.fetchall()
 
@@ -84,7 +121,8 @@ class mysql_db_class(object):
             cursor.callproc(sp_name, sp_args_list)
             # self.connection.commit()
             success = 0
-        except:
+        except mysqldb.Error as err:
+            print("Failed Insert: {}".format(err))
             self.connection.rollback()
 
         return success
