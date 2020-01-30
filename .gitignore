@@ -1,0 +1,4 @@
+# Exclude vim swap files
+/src/.*.swp
+/src/__pycache__
+/src/*.pyc

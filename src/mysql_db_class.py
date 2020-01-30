@@ -100,7 +100,7 @@ class mysql_db_class(object):
 
         cursor = self.connection.cursor(dictionary=True)
         if isinstance(query, str) and params_tuple is None:
-            print("Warning -- SQL injection -- candidate (query)")
+            # print("Warning -- SQL injection -- candidate (query)")
             cursor.execute(query)
         elif isinstance(query, tuple) and isinstance(params_tuple, (tuple, dict)):
             cursor.execute(query, params_tuple)

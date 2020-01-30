@@ -187,6 +187,21 @@ def calc_date_time(join_char=""):
     time_str = join_char.join([hour, mins])
     return dt_str, time_str
 
+def append_date_file(filename, search_str="----", append_time=True):
+    """ Python fnuction that date and time information to filename """
+    filename_final = ""
+    if filename.find(search_str) >= 0:
+        str_date, str_time = calc_date_time()
+        if append_time:
+            filename_final = filename.replace(
+                search_str, "_".join([str_date, str_time]))
+        else:
+            filename_final = filename.replace(
+                search_str, str_date, str_time)
+    else:
+        filename_final = filename
+
+    return filename_final
 
 def calc_directory(init_dir, dbg=False):
     """ Returns calculated directory structure and date as str"""
