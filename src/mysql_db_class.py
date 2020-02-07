@@ -122,10 +122,27 @@ class mysql_db_class(object):
             # self.connection.commit()
             success = 0
         except mysqldb.Error as err:
-            print("Failed Insert: {}".format(err))
+            print("Failed to exceute stored procedure: {}".format(err))
             self.connection.rollback()
 
         return success
+
+    def execute_stored_procedure_result(self, sp_name, sp_args_list):
+        """ Call stored procedure from mysql"""
+        success = 1
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            success = cursor.callproc(sp_name, sp_args_list)
+            for result in cursor.stored_results():
+                success = result.fetchall()
+            # print(success)
+            # self.connection.commit()
+        except mysqldb.Error as err:
+            print("Failed to exceute stored procedure: {}".format(err))
+            self.connection.rollback()
+
+        return success
+
 
     def __del__(self):
         if self.connection:

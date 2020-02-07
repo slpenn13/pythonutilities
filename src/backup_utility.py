@@ -224,6 +224,37 @@ def calc_debug_levels(args_dict):
 
     return dbg, print_dbg
 
+def calc_single_period_advance(curr_month=13, curr_year=9999, deltatype=1, dbg=False):
+    """ calculated time delta necessary to advance based on requested amount and deltatype """
+    if curr_month < 13 and curr_year < 9999:
+        if deltatype == 4:
+            if curr_month > 2 and ((curr_year + 1) % 4 == 0):
+                delta = dt.timedelta(days=366)
+            elif curr_month > 2 and ((curr_year + 1) % 4 != 0):
+                delta = dt.timedelta(days=365)
+            elif  curr_month <= 2 and (curr_year % 4 == 0):
+                delta = dt.timedelta(days=366)
+            elif  curr_month <= 2 and (curr_year % 4 != 0):
+                delta = dt.timedelta(days=365)
+        elif deltatype == 3:
+            if curr_month in (1, 3, 5, 7, 8, 10, 12):
+                delta = dt.timedelta(days=31)
+            elif  curr_month in (4, 6, 9, 11):
+                delta = dt.timedelta(days=30)
+            else:
+                if curr_year % 4 == 0:
+                    delta = dt.timedelta(days=29)
+                else:
+                    delta = dt.timedelta(days=28)
+        elif deltatype == 2:
+            delta = dt.timedelta(weeks=1)
+        else:
+            delta = dt.timedelta(days=1)
+    else:
+        delta = -1
+
+    return delta
+
 def apply_rsync(init_base_dir, init_rslt_dir, itm, dbg=False):
     """ copies files from src (init_base_dir) to dest (init_rslt_dir)
     """

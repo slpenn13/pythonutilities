@@ -92,6 +92,10 @@ class debug_control(object):
         else:
             self.handle.close()
 
+    def __del__(self):
+        if not self.handle.closed:
+            self.handle.close()
+
 def test_dbg(dbg):
     """ Simple function to test debug status"""
     return (isinstance(dbg, bool) and dbg) or (

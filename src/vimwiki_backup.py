@@ -133,11 +133,15 @@ if __name__ == "__main__":
         else:
             if "verbose" not in args_dict.keys() and "debug_file" not in args_dict.keys():
                 args_dict["verbose"] = 0
+            elif "debug_file" in args_dict.keys():
+                args_dict["debug_file"] = bu.append_date_file(args_dict["debug_file"])
     else:
         if "backup_dir" not in args_dict.keys() or "src" not in args_dict.keys():
             raise ValueError("Dictionary Combination")
 
     dbg, print_dbg = bu.calc_debug_levels(args_dict)
+    if "debug_file" in args_dict.keys():
+        dbc.print_helper(("Using debug file " + args_dict["debug_file"]), dbg=dbg)
 
     hostname = bu.calc_hostname(dbg=dbg)
     if hostname is not None:
