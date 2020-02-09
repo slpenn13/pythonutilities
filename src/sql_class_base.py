@@ -42,7 +42,8 @@ class sql_query_base():
             self.q_str = q_str
         else:
             self.construct_sp(info)
-        if "vars" in info.keys() and isinstance(info["vars"], dict):
+
+        if "vars" in info.keys() and isinstance(info["vars"], (list, dict)):
             self.vars = info["vars"].copy()
         else:
             self.vars = None
@@ -53,7 +54,13 @@ class sql_query_base():
         self.return_result = False
         self.q_str = "generate"
 
-        if "items" in info.keys() and isinstance(info["items"], dict) and\
+        if  "items" in info.keys() and len(info["items"]) == 1 and\
+                "columns" in info.keys() and isinstance(info["columns"], dict):
+            self.columns = co.OrderedDict()
+            for key, val in info["columns"].items():
+                self.columns[key] = val
+
+        elif "items" in info.keys() and isinstance(info["items"], dict) and\
                 len(info["items"]) > 1:
             self.columns = co.OrderedDict()
             for key, val in info["items"].items():
@@ -61,12 +68,6 @@ class sql_query_base():
                     self.columns[val] = key
                 else:
                     self.columns[key] = key
-        elif  "items" in info.keys() and len(info["items"]) == 1 and\
-                "columns" in info.keys() and isinstance(info["columns"], dict):
-            self.columns = co.OrderedDict()
-            for key, val in info["items"].items():
-                self.columns[val] = key
-
         elif "items" in info.keys() and isinstance(info["items"], list):
             self.columns = co.OrderedDict()
             for val in info["items"]:
@@ -84,17 +85,7 @@ class sql_query_base():
                                            self.sql_type_ind is sql_type.STORED_PROCEDURE_RES))
 
         elif "procedure" in info.keys():
-            q_temp = ["CALL", info["procedure"]]
-
-            if "vars" in info.keys():
-                if len(info["vars"]) == 1:
-                    q_temp.append(" (?);")
-                elif len(info["vars"]) > 1:
-                    q_temp2 = [" (", "?, "*(len(info["vars"])-1), " ?);"]
-                    q_temp2 = "".join(q_temp2)
-                    q_temp.append(q_temp2)
-
-            self.q_str = " ".join(q_temp)
+            self.q_str = info["procedure"]
 
             self.sql_type_ind = (info["q_type_ind"] if "q_type_ind" in info.keys() else
                                  sql_type.STORED_PROCEDURE_NO_RES)
@@ -203,7 +194,7 @@ def calculate_current_view(q_view, index_name):
         result = sql_query_base(info, q_str=q_str)
 
     elif isinstance(q_view, dict) and\
-            "query" in q_view and\
+            "query" in q_view.keys() and\
             q_view["query"].upper().startswith("SELECT"):
         q_table = calc_table_name(q_view["query"], sql_type.SELECT)
         info["table"] = q_table
@@ -216,13 +207,16 @@ def calculate_current_view(q_view, index_name):
 
 
     elif isinstance(q_view, dict) and\
-            "procedure" in q_view:
+            "procedure" in q_view.keys():
         info["table"] = q_view["procedure"]
         info["procedure"] = q_view["procedure"]
         info["index_name"] = index_name
         info["q_type_ind"] = sql_type.STORED_PROCEDURE_RES
 
-        result = sql_query_base(info, "CALL")
+        if "vars" in q_view.keys():
+            info["vars"] = q_view["vars"].copy()
+
+        result = sql_query_base(info, q_str="CALL")
 
         if "location" in q_view.keys():
             determine_periodicity = True
