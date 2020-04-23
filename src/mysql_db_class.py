@@ -104,7 +104,7 @@ class mysql_db_class(object):
             cursor.execute(query)
         elif isinstance(query, tuple) and isinstance(params_tuple, (tuple, dict)):
             cursor.execute(query, params_tuple)
-        elif isinstance(query, str) and isinstance(params_tuple, (tuple, dict)):
+        elif isinstance(query, str) and isinstance(params_tuple, (tuple, dict, list)):
             cursor.execute(query, params_tuple)
         else:
             base = "SQL (query) type combination not supported %s %s"
@@ -119,7 +119,8 @@ class mysql_db_class(object):
         try:
             cursor = self.connection.cursor(dictionary=True)
             cursor.callproc(sp_name, sp_args_list)
-            # self.connection.commit()
+            self.connection.commit()
+            cursor.close()
             success = 0
         except mysqldb.Error as err:
             print("Failed to exceute stored procedure: {}".format(err))
@@ -137,6 +138,7 @@ class mysql_db_class(object):
                 success = result.fetchall()
             # print(success)
             # self.connection.commit()
+            cursor.close()
         except mysqldb.Error as err:
             print("Failed to exceute stored procedure: {}".format(err))
             self.connection.rollback()
