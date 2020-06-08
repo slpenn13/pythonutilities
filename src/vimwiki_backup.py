@@ -57,7 +57,7 @@ def update_files(src, dest, temp, excluded_ending=None, dbg=False):
     else:
         excluded_final = set(excluded_ending)
 
-    for dirpath, dirnames, filenames in os.walk(src):
+    for dirpath, _, filenames in os.walk(src):
         dir_split = str(dirpath).split(os.sep)
         cur_len = len(str(dirpath).split(os.sep))
         cur_index = init_index + (init_len - cur_len)
@@ -128,6 +128,10 @@ if __name__ == "__main__":
         if "backup_dir" not in args_dict.keys():
             raise ValueError("JSON must include backup_dir")
 
+        hostname = None
+        if "hostname" in args_dict.keys():
+            hostname = args_dict["hostname"]
+
         if args.verbose > 0:
             args_dict["verbose"] = args.verbose
         else:
@@ -143,7 +147,9 @@ if __name__ == "__main__":
     if "debug_file" in args_dict.keys():
         dbc.print_helper(("Using debug file " + args_dict["debug_file"]), dbg=dbg)
 
-    hostname = bu.calc_hostname(dbg=dbg)
+    if hostname is None:
+        hostname = bu.calc_hostname(dbg=dbg)
+
     if hostname is not None:
         dest = os.sep.join([args_dict["backup_dir"], hostname])
     else:
