@@ -18,7 +18,9 @@ class mysql_db_class(object):
         if password is None and path is not None:
             self.connection = mysqldb.connect(option_files=path, option_groups=group,
                                               use_unicode=True, charset="utf8",
-                                              collation="utf8_general_ci", db=self.database)
+                                              collation="utf8_general_ci",
+                                              use_pure=True,                    
+                                              db=self.database)
         else:
             self.connection = mysqldb.connect(
                 host=self.host, user=self.user, password=password, db=self.database
