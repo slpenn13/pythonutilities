@@ -197,7 +197,7 @@ def append_date_file(filename, search_str="----", append_time=True):
                 search_str, "_".join([str_date, str_time]))
         else:
             filename_final = filename.replace(
-                search_str, str_date, str_time)
+                search_str, str_date)
     else:
         filename_final = filename
 
