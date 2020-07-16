@@ -174,7 +174,7 @@ def construct_zip(src_dir, base_dir, base_name="vimwiki_diff_backup", excluded_e
 
     return zipname
 
-def calc_date_time(join_char=""):
+def calc_date_time(join_char="", include_sec=False):
     """ Calculates Date & Time strings from datetime.now()"""
     dtn = dt.datetime.now()
 
@@ -182,16 +182,21 @@ def calc_date_time(join_char=""):
     day = str(dtn.day) if dtn.day > 9 else "0" + str(dtn.day)
     hour = str(dtn.hour)
     mins = str(dtn.minute) if dtn.minute > 9 else "0" + str(dtn.minute)
+    sec = str(dtn.second) if dtn.second > 9 else "0" + str(dtn.second)
 
     dt_str = join_char.join([str(dtn.year), month, day])
-    time_str = join_char.join([hour, mins])
+    if include_sec:
+        time_str = join_char.join([hour, mins, sec])
+    else:
+        time_str = join_char.join([hour, mins])
+
     return dt_str, time_str
 
-def append_date_file(filename, search_str="----", append_time=True):
+def append_date_file(filename, search_str="----", append_time=True, include_second=False):
     """ Python fnuction that date and time information to filename """
     filename_final = ""
     if filename.find(search_str) >= 0:
-        str_date, str_time = calc_date_time()
+        str_date, str_time = calc_date_time(include_sec=include_second)
         if append_time:
             filename_final = filename.replace(
                 search_str, "_".join([str_date, str_time]))
