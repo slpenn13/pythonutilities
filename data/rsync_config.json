@@ -1,0 +1,11 @@
+{
+    "exclusions": [
+        "*.stackdump",
+        "*.swo",
+        "*.swp"
+    ],
+    "syncs": {
+        "vimwiki": {"from": "/home/StephenPennington", "to": "/cygdrive/h"},
+        "projects": {"from": "/home/StephenPennington", "to": "/cygdrive/h"}
+    }
+}

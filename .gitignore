@@ -133,3 +133,4 @@ dmypy.json
 .*.sw[po]
 bin/tags
 src/tags
+tags

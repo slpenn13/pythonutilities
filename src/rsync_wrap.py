@@ -9,7 +9,7 @@ import datetime as dt
 # import tarfile
 # import zipfile as zp
 # import debug_control as dbc
-# import json
+import json
 import argparse
 # import datetime as dt
 # import tarfile
@@ -33,32 +33,38 @@ def exec_rsync(opt, dbg=False, print_dbg=False):
     if os.path.exists(dest):
         dbc.print_helper(("Directory Exists: " + dest + os.linesep), dbg=dbg)
     else:
-        os.mkdir(dest)
+        x1 = os.path.split(dest)
+        if x1[1] and os.path.exists(x1[0]):
+            os.mkdir(dest)
+        else:
+            raise ValueError("Destination must be valid or constructable")
 
-    """ copies files from src (init_base_dir) to dest (init_rslt_dir)
-    """
+    # copies files from src (init_base_dir) to dest (init_rslt_dir)
     print_dbg = dbc.test_dbg(dbg)
 
-    rsync_list = [
-        "rsync",
-        opt['base'],
-        opt['delete'],
-        "--info=SKIP,STATS",
-        opt["exclusion"],
-        (source + os.sep),
-        dest
-    ]
+    rsync_list = ["rsync"]
+    for itm in ['base', 'delete', 'exclusion']:
+        if itm in opt.keys() and opt[itm] and isinstance(opt[itm], (str, list)):
+            if isinstance(opt[itm], list):
+                for itm2 in opt[itm]:
+                    rsync_list.append(itm2)
+            else:
+                rsync_list.append(opt[itm])
+        else:
+            dbc.print_helper(("Excluded " + itm), dbg)
+
+    rsync_list.append("--info=SKIP,DEL,STATS")
+    rsync_list.append((source + os.sep))
+    rsync_list.append(dest)
 
     split = source.split(os.sep)
     itm = split[len(split)-1]
 
-    base_str = "".join(["RSYNC: --", " ".join(rsync_list), os.linesep])
+    base_str = "".join(["RSYNC: ", " ".join(rsync_list), os.linesep])
     dbc.print_helper(base_str, dbg)
 
-    call_rslt = subp.run(rsync_list, stdout=subp.PIPE, stderr=subp.PIPE)
-    if call_rslt.returncode != 0:
-        dbc.error_helper("RSYNC Error:", call_rslt.stderr, post=itm, dbg=dbg)
-    else:
+    try:
+        call_rslt = subp.run(rsync_list, check=True, stdout=subp.PIPE, stderr=subp.PIPE)
         if print_dbg:
             if isinstance(dbg, bool):
                 base_time_str = dt.datetime.now()
@@ -74,7 +80,12 @@ def exec_rsync(opt, dbg=False, print_dbg=False):
 
             else:
                 dbg.write_stdout(itm, call_rslt.stdout)
-# bu.apply_rsync(args.temp_dir, dest, "Back-up", dbg=dbg)
+    except ValueError as v:
+        dbc.error_helper("RSYNC Error:", v, post="", dbg=dbg)
+    except subp.CalledProcessError as c:
+        dbc.error_helper("RSYNC Error:", c.stderr,
+                         post=" ".join([c.output.decode("UTF-8"), str(c.returncode), "\n"]),
+                         dbg=dbg)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -84,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--backup_dir", default="projects", type=str,
                         help="base directory to backup")
     parser.add_argument("-d", "--delete", default=0, type=int,
-                        help="delete indicator > 1 => --delete")
+                        help="delete indicator > 0 => --delete")
     parser.add_argument("-f", "--exclude_file", default="", type=str,
                         help="exclude file ... must follow rsync format")
     parser.add_argument("-n", "--dryrun", default=0, type=int,
@@ -97,6 +108,8 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--destination", default="", type=str,
                         help="destination directory")
 
+    parser.add_argument("-u", "--update", default=0, type=int,
+                        help="update indicator > 0")
     parser.add_argument("-v", "--verbose", default=0, type=int)
 
 
@@ -106,7 +119,6 @@ if __name__ == "__main__":
     )
     parser.add_argument("-o", "--options", default=None, type=str)
 
-    parser.add_argument("-u", "--user", default="spennington", type=str)
     parser.add_argument("-w", "--temp_dir", default="/home/spennington/workspace", type=str,
                         help="Working directory where files are backed-up")
 
@@ -116,24 +128,49 @@ if __name__ == "__main__":
     opt = {}
 
     base = "-a" + ("v" if args.verbose > 0 else "")
-    opt['base'] = base + ("d" if args.dryrun > 0 else "")
+    base = base + ("u" if args.update > 0 else "")
+    opt["verbose"] = args.verbose
+    opt['base'] = base + ("n" if args.dryrun > 0 else "")
     opt['delete'] = ("--delete" if args.delete > 0 else "")
-    opt['exclusion'] = (('--exclude-from=\"' + args.exclude_file +'\"') if args.exlude_file and\
-                         isinstance(args.exclude_file, str) and\
-                         os.path.exists(args.exclude_file) else "--exclude=*.sw[op]")
-
     opt['reverse'] = bool(args.reverse > 0)
 
-    if args.source:
-        opt['source'] = args.source
+    if 'options' in args_dict.keys() and os.path.exists(args.options):
+        with open(args.options, 'r') as fp:
+            opt['options'] = json.load(fp)
+        fp.close()
+        if 'exclusions' in opt['options'].keys() and opt['options']['exclusions']:
+            opt['exclusion'] = []
+            for itm in opt['options']['exclusions']:
+                opt['exclusion'].append("=".join(["--exclude", itm]))
+        else:
+            opt['exclusion'] = (('--exclude-from=\"' + args.exclude_file +'\"')\
+                                 if args.exclude_file and\
+                                 isinstance(args.exclude_file, str) and\
+                                 os.path.exists(args.exclude_file) else "--exclude=*.sw[op]")
     else:
-        raise ValueError("Source must be provided and non empty string")
+        opt['exclusion'] = (('--exclude-from=\"' + args.exclude_file +'\"')\
+                             if args.exclude_file and\
+                             isinstance(args.exclude_file, str) and\
+                             os.path.exists(args.exclude_file) else "--exclude=*.sw[op]")
 
-    if args.destination:
-        opt['dest'] = args.destination
-    else:
-        raise ValueError("Destination must be provided and non empty string")
+        if args.source:
+            opt['source'] = args.source
+        else:
+            raise ValueError("Source must be provided and non empty string")
+
+        if args.destination:
+            opt['dest'] = args.destination
+        else:
+            raise ValueError("Destination must be provided and non empty string")
 
     dbg, print_dbg = bu.calc_debug_levels(args_dict)
 
-    exec_rsync(opt, dbg, print_dbg)
+    if 'options' in opt.keys() and isinstance(opt['options'], dict) and\
+            'syncs' in opt['options'].keys() and opt['options']['syncs']:
+        for key, val in opt['options']['syncs'].items():
+            opt['dest'] = os.sep.join([val['to'], key])
+            opt['source'] = os.sep.join([val['from'], key])
+
+            exec_rsync(opt, dbg, print_dbg)
+    else:
+        exec_rsync(opt, dbg, print_dbg)
