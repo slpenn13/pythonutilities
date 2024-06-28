@@ -29,6 +29,11 @@ def exec_rsync(opt, dbg=False, print_dbg=False):
         dest = opt['dest']
         source = opt['source']
 
+    if 'regex' in opt.keys() and opt['regex'] and isinstance(opt['regex'], str):
+        dbc.print_helper("Adding %s" % (opt['regex']), dbg)
+        source = os.sep.join([source, opt['regex']])
+    else:
+        source = source + os.sep
 
     if os.path.exists(dest):
         dbc.print_helper(("Directory Exists: " + dest + os.linesep), dbg=dbg)
@@ -53,8 +58,8 @@ def exec_rsync(opt, dbg=False, print_dbg=False):
         else:
             dbc.print_helper(("Excluded " + itm), dbg)
 
-    rsync_list.append("--info=SKIP,DEL,STATS")
-    rsync_list.append((source + os.sep))
+    rsync_list.append("--info=DEL,STATS")
+    rsync_list.append(source)
     rsync_list.append(dest)
 
     split = source.split(os.sep)
@@ -128,9 +133,13 @@ if __name__ == "__main__":
     opt = {}
 
     base = "-a" + ("v" if args.verbose > 0 else "")
-    base = base + ("u" if args.update > 0 else "")
+    base = base + ("n" if args.dryrun > 0 else "")
     opt["verbose"] = args.verbose
-    opt['base'] = base + ("n" if args.dryrun > 0 else "")
+
+
+    opt['base'] = base + ("u" if args.update > 0 else "")
+    print("Update " + str(args.update))
+    print(args_dict)
     opt['delete'] = ("--delete" if args.delete > 0 else "")
     opt['reverse'] = bool(args.reverse > 0)
 
@@ -170,6 +179,10 @@ if __name__ == "__main__":
         for key, val in opt['options']['syncs'].items():
             opt['dest'] = os.sep.join([val['to'], key])
             opt['source'] = os.sep.join([val['from'], key])
+            if 'regex' in val.keys() and val['regex']:
+                opt['regex'] = val['regex']
+            else:
+                opt['regex'] = ''
 
             exec_rsync(opt, dbg, print_dbg)
     else:

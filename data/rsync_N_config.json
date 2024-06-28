@@ -1,0 +1,14 @@
+{
+    "exclusions": [
+        "*.stackdump",
+        "*.swo",
+        "*.swp"
+    ],
+    "syncs": {
+        "Results": {"from": "/home/StephenPennington/projects/Compliance",
+          "regex": "L[GM][OB][VS]_Compliance*",
+          "to": "/cygdrive/n/Departments/FirstTrustAdvisors/Private/MBS/SLP"},
+        "research": {"from": "/home/StephenPennington/projects", 
+          "to": "/cygdrive/n/Departments/FirstTrustAdvisors/Private/MBS/SLP"}
+    }
+}

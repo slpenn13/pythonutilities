@@ -1,0 +1,18 @@
+{
+    "exclusions": [
+        "daily",
+        "RMBS2",
+		"Vendor/BBG/CMP/V2/CmpExcelInstall",
+		"Vendor/BBG/CMP/V2/CmpExcelUpdate",
+        "*.stackdump",
+        "*.swo",
+        "*.swp",
+	".ipynb_checkpoints",
+	".vscode"
+    ],
+    "syncs": {
+        "vimwiki": {"from": "/home/StephenPennington", "to": "//DS-FILES/StephenPennington"},
+        "projects": {"from": "/home/StephenPennington", "to": "//DS-FILES/StephenPennington"},
+		"research": {"from": "/home/StephenPennington", "to": "//DS-FILES/StephenPennington"}
+    }
+}
