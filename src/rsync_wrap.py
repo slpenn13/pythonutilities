@@ -42,7 +42,7 @@ def exec_rsync(opt, dbg=False, print_dbg=False):
         if x1[1] and os.path.exists(x1[0]):
             os.mkdir(dest)
         else:
-            raise ValueError("Destination must be valid or constructable")
+            raise ValueError("Destination must be valid or constructable %s", dest)
 
     # copies files from src (init_base_dir) to dest (init_rslt_dir)
     print_dbg = dbc.test_dbg(dbg)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     opt['reverse'] = bool(args.reverse > 0)
 
     if 'options' in args_dict.keys() and os.path.exists(args.options):
-        with open(args.options, 'r') as fp:
+        with open(args.options, mode='r', encoding='ascii') as fp:
             opt['options'] = json.load(fp)
         fp.close()
         if 'exclusions' in opt['options'].keys() and opt['options']['exclusions']:
